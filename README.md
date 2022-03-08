@@ -184,9 +184,9 @@ In the new version of kernel, both verifier and ALU sanitizer have been enhanced
 
 If we can make len larger than the length of the buf on the stack, we can just stack overflow. Since the added vulnerability allows us to get a register with a runtime value of 1 that the verifier determines to be 0, it is easy to specify a very long len and fool the verifier.
 
-唯一的问题是 leak，也许可以通过溢出修改 bpf 栈上的指针变量实现任意地址读，但是笔者在调试时发现新版本内核在 ebpf 程序 crash（如 0 地址访问）时并不会造成内核崩溃，还会打出一些地址信息，笔者就直接通过这种方式完成 leak 了。
+唯一的问题是 leak，也许可以通过溢出修改 bpf 栈上的指针变量实现任意地址读，但是笔者在调试时发现新版本内核在 ebpf 程序 crash（如 0 地址访问）时并不会造成内核崩溃（后来发现是忘了加 `oops = panic` 造成的），还会打出一些地址信息，笔者就直接通过这种方式完成 leak 了。
 
-The only problem is leak, perhaps through the overflow to modify the bpf stack pointer variables to achieve arbitrary address read, but I found in debugging the new version of the kernel in the ebpf program crash (such as 0 address access) does not cause the kernel to crash, but also hit some address information, the author will be directly through this way to complete the leak.
+The only problem is leak, perhaps through the overflow to modify the bpf stack pointer variables to achieve arbitrary address read, but I found in debugging the new version of the kernel in the ebpf program crash (such as 0 address access) does not cause the kernel to crash (later found out that it was caused by forgetting to add `oops = panic`), but also hit some address information, the author will be directly through this way to complete the leak.
 
 由于可以栈溢出，所以之后的利用非常简单，这里不再赘述。
 
