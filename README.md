@@ -184,9 +184,9 @@ In the new version of kernel, both verifier and ALU sanitizer have been enhanced
 
 If we can make len larger than the length of the buf on the stack, we can just stack overflow. Since the added vulnerability allows us to get a register with a runtime value of 1 that the verifier determines to be 0, it is easy to specify a very long len and fool the verifier.
 
-唯一的问题是 leak，也许可以通过溢出修改 bpf 栈上的指针变量实现任意地址读，但是笔者在调试时发现新版本内核在 ebpf 程序 crash（如 0 地址访问）时并不会造成内核崩溃（后来发现是忘了加 `oops = panic` 造成的），还会打出一些地址信息，笔者就直接通过这种方式完成 leak 了。
+唯一的问题是 leak，也许可以通过溢出修改 bpf 栈上的指针变量实现任意地址读，但是笔者在调试时发现新版本内核在 ebpf 程序 crash（如 0 地址访问）时并不会造成内核崩溃（因为这属于 “soft panic”，当 /proc/sys/kernel/panic_on_oops 值为 0 时 soft panic 并不会直接 panic。似乎在默认情况下其值就是 0，如 Ubuntu 20.04。在 ctf 的 kernel pwn 题中，可能由于不希望被通过 crash 打印日志的方法 leak，一般都会在 qemu 启动项里通过 oops = panic 来让 soft panic 也直接造成 kernel 的重启），还会打出一些地址信息，笔者就直接通过这种方式完成 leak 了。
 
-The only problem is leak, perhaps through the overflow to modify the bpf stack pointer variables to achieve arbitrary address read, but I found in debugging the new version of the kernel in the ebpf program crash (such as 0 address access) does not cause the kernel to crash (later found out that it was caused by forgetting to add `oops = panic`), but also hit some address information, the author will be directly through this way to complete the leak.
+The only problem is leak, perhaps through the overflow to modify the bpf stack pointer variables to achieve arbitrary address read, but I found in debugging the new version of the kernel in the ebpf program crash (such as 0 address access) does not cause the kernel to crash (Because this is a "soft panic", soft panic does not panic directly when `/proc/sys/kernel/panic_on_oops` is 0. It seems that by default it is `0`, as in Ubuntu 20.04. In ctf's kernel pwn challenges, the soft panic is usually made to cause a direct kernel reboot by `oops = panic` in the qemu boot entry, probably because you don't want to be leaked by crashing and printing the log), but also hit some address information, the author will be directly through this way to complete the leak.
 
 由于可以栈溢出，所以之后的利用非常简单，这里不再赘述。
 
